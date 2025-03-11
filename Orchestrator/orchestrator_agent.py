@@ -23,16 +23,16 @@ class OrchestratorWorkflow:
     def _add_nodes(self):
         self.graph.add_node("prompt_user", self.nodes.prompt_user)
         self.graph.add_node("orchestrator", self.nodes.orchestrator)
-        self.graph.add_node("llm_call", self.nodes.llm_call)
+        self.graph.add_node("section_writer", self.nodes.section_writer)
         self.graph.add_node("synthesizer", self.nodes.synthesizer)
     
     def _add_edges(self):
         self.graph.add_edge(START, "prompt_user")
         self.graph.add_edge("prompt_user", "orchestrator")
         self.graph.add_conditional_edges(
-        "orchestrator", self.nodes.assign_workers, ["llm_call"]
+        "orchestrator", self.nodes.assign_workers, ["section_writer"]
     )
-        self.graph.add_edge("llm_call", "synthesizer")
+        self.graph.add_edge("section_writer", "synthesizer")
         self.graph.add_edge("synthesizer", END)        
 
     
@@ -43,5 +43,7 @@ class OrchestratorWorkflow:
     
     def run(self) -> OrchestratorState:
         completed_state = self.workflow.invoke({"topic": "None"})
+        
+        print(f"DEBUG -> Orchestrator complete ... \n-----------\nfinal report: {completed_state['final_report']}\n-----------\n")
         return completed_state
 

@@ -1,9 +1,8 @@
 from IPython.display import Image, display
-from Utils.gates import JokeGeneratorGates, ParallelWorkflowGates
-from Utils.nodes import JokeGeneratorNodes, ParallelWorkflowNodes
-from config import MODELS
+from Utils.gates import ParallelWorkflowGates
+from Utils.nodes import ParallelWorkflowNodes
 from langgraph.graph import StateGraph, START, END
-from Utils.states import JokeGeneratorState, ParallelWorkflowState
+from Utils.states import ParallelWorkflowState
 
 
 class ParallelGenerator:
