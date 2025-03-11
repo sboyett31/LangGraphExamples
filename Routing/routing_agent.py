@@ -1,0 +1,48 @@
+from IPython.display import Image, display
+from Utils.gates import JokeGeneratorGates, ParallelWorkflowGates
+from Utils.nodes import JokeGeneratorNodes, ParallelWorkflowNodes, RoutingNodes
+from config import MODELS
+from langgraph.graph import StateGraph, START, END
+from Utils.states import JokeGeneratorState, ParallelWorkflowState, RoutingState
+
+
+class ParallelGenerator:
+        
+    def __init__(self):
+        self.graph = StateGraph(ParallelGenerator)
+        self._initialize_graph_objects()
+        self._add_nodes()
+        self._add_edges()
+        self.workflow = self.graph.compile()
+   
+    def _initialize_graph_objects(self):
+        self.state = RoutingState()
+        self.nodes = RoutingNodes()
+        # self.gates = RoutingGates()
+   
+    def _add_nodes(self):
+        self.graph.add_node("prompt_user", self.nodes.prompt_user)
+        self.graph.add_node("split", self.nodes.split)
+        self.graph.add_node("create_joke", self.nodes.create_joke)
+        self.graph.add_node("create_story", self.nodes.create_story)
+        self.graph.add_node("create_poem", self.nodes.create_poem)
+        self.graph.add_node("aggregator", self.nodes.aggregator)    
+    
+    def _add_edges(self):
+        self.graph.add_edge(START, "prompt_user")
+        self.graph.add_conditional_edges("prompt_user", self.gates.check_user_input, {"Valid": "split", "Invalid": END})      
+        self.graph.add_edge("split", "create_joke")
+        self.graph.add_edge("split", "create_story")
+        self.graph.add_edge("split", "create_poem")
+        self.graph.add_edge("create_joke", "aggregator")
+        self.graph.add_edge("create_story", "aggregator")
+        self.graph.add_edge("create_poem", "aggregator")
+        
+    def show_workflow(self):
+        # Render the graph to a PNG file and display it
+        display(Image(self.workflow.get_graph().draw_mermaid_png()))
+
+        
+    def run(self):
+        self.workflow.invoke({"topic": "None"})
+        return self.workflow.state
