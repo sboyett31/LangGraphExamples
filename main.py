@@ -5,7 +5,9 @@ import dotenv
 
 # Import agent implementations
 from JokeGenerator.joke_agent import JokeGenerator
+from Orchestrator.orchestrator_agent import OrchestratorWorkflow
 from ParallelChains.parallel_agents import ParallelGenerator
+from Routing.routing_agent import RoutingWorkflow
 from Utils.structured_outputs import SearchQuery
 from Utils.tools import multiply
 from config import MODELS
@@ -13,7 +15,7 @@ from config import MODELS
 
 def run_workflow(workflow):
     """Run the workflow agent."""
-    print(f" running workflow: {workflow}")
+    print(f" running workflow: {workflow.__class__.__name__}")
     # Create and run the workflow
     result = workflow.run()
     
@@ -36,6 +38,18 @@ def run_workflow(workflow):
         print(f"Joke: {result.get('joke')}")
         print(f"Story: {result.get('story')}")
         print(f"Poem: {result.get('poem')}")
+    elif workflow.__class__.__name__ == "RoutingWorkflow":
+        print("\nGenerated Content:")
+        print(result.get('output'))
+        print("\nRouting Information:")
+        print(f"User Input: {result.get('input')}")
+        print(f"Routing Decision: {result.get('decision')}")
+    elif workflow.__class__.__name__ == "OrchestratorWorkflow":
+        print("\nGenerated Content:")
+        print(result.get('output'))
+        print("\nRouting Information:")
+        print(f"User Input: {result.get('input')}")
+
 
 
 def display_menu(options: List[Dict[str, Any]]):
@@ -76,6 +90,16 @@ def main():
             "name": "Parallel Generator",
             "description": "Generate joke, story, and poem on a given topic using a graph-based workflow",
             "workflow": ParallelGenerator() 
+        },
+        {
+            "name": "Content Router",
+            "description": "Intelligently route your request to generate a joke, story, or poem",
+            "workflow": RoutingWorkflow()
+        },
+        {
+            "name": "Report Generator",
+            "description": "Intelligently create a report about a topic of your choosing",
+            "workflow": OrchestratorWorkflow()
         },
     ]
     

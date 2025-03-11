@@ -1,0 +1,32 @@
+{
+    "configurations": [
+      {
+        "type": "debugpy",
+        "request": "launch",
+        "name": "Launch Program",
+        "program": "${workspaceFolder}/${input:programPath}"
+      }
+    ],
+    "inputs": [
+      {
+        "type": "pickString",
+        "id": "programPath",
+        "description": "Select the Python file to debug",
+        "options": [
+          "main.py",
+          "Examples/llm_with_tools.py",
+          "Examples/structured_out_llm.py",
+          "JokeGenerator/joke_agent.py",
+          "Orchestrator/worker.py",
+          "ParallelChains/parallel_agents.py",
+          "Routing/routing_agent.py",
+          "Utils/gates.py",
+          "Utils/nodes.py",
+          "Utils/states.py",
+          "Utils/structured_outputs.py",
+          "Utils/tools.py"
+            ]
+        }
+      
+    ]
+}

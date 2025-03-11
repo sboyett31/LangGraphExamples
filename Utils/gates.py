@@ -1,4 +1,4 @@
-from Utils.states import WorkflowState
+from Utils.states import RoutingState, WorkflowState
 
 
 class JokeGeneratorGates:
@@ -21,4 +21,18 @@ class ParallelWorkflowGates:
         return "Invalid"
     
 class RoutingGates:
-    pass
+    
+    def route_decision(self, state: RoutingState):
+        if state.get("routing_tries") is None:
+            state["routing_tries"] = 0
+        print(f"routing decision... routing tries = {state.get('routing_tries')}")
+        state["routing_tries"] = state.get("routing_tries") + 1
+        if state["routing_tries"] > 3:
+            return "end"
+        if state.get("decision") in ["story", "joke", "poem"]:
+            print(f"DEBUG -> routing to {state.get('decision')}")
+            return state.get("decision")
+        else:
+            print(f"DEBUG -> Invalid decision")
+            return "invalid_decision"
+        

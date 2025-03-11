@@ -1,4 +1,4 @@
-from Utils.structured_outputs import JokeResponse, PoemResponse, RouterResponse, StoryResponse
+from Utils.structured_outputs import JokeResponse, PoemResponse, Route, Sections, StoryResponse
 import dotenv
 import os
 from langchain_anthropic import ChatAnthropic
@@ -20,4 +20,5 @@ class MODELS:
             joke_gen = sonnet.with_structured_output(JokeResponse)
             story_gen = sonnet.with_structured_output(StoryResponse)
             poem_gen = sonnet.with_structured_output(PoemResponse)
-            router = sonnet.with_structured_output(RouterResponse)
+            router = sonnet.with_structured_output(Route)
+            planner = sonnet.with_structured_output(Sections)

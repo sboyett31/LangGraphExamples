@@ -2,9 +2,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from langchain.schema import SystemMessage, HumanMessage
-from Utils.states import JokeGeneratorState, ParallelWorkflowState, RoutingState
+from Utils.states import JokeGeneratorState, OrchestratorState, ParallelWorkflowState, RoutingState, WorkerState
 from Utils.structured_outputs import JokeResponse, PoemResponse, StoryResponse
 from config import MODELS
+from langgraph.constants import Send
 
 @dataclass
 class Prompt:
@@ -15,6 +16,11 @@ class Prompt:
 class JokePrompt(Prompt):
     text: str = "Enter a topic for your joke: "
     var: str = "topic"
+    
+@dataclass
+class ReportPrompt(Prompt):
+    text: str = "Enter a topic for your report: "
+    var: str = "topic"
 
 @dataclass
 class ContentPrompt(Prompt):
@@ -23,8 +29,8 @@ class ContentPrompt(Prompt):
     
 @dataclass
 class RequestPrompt(Prompt):
-    text: str = "Enter a topic for your content: "
-    var: str = "topic"
+    text: str = "Enter A request for the Agent: "
+    var: str = "input"
 
 class ClaudeNodes(ABC):
     LLM: str = MODELS.Anthropic.Claude_3_5
@@ -43,6 +49,9 @@ class ClaudeNodes(ABC):
 
     @property
     def poem_generator(self): return self.LLM.poem_gen.invoke
+    
+    @property
+    def planner(self): return self.LLM.planner.invoke
 
     def output(self, msg: str):
         print(f"{self.PROMPT} {msg}")
@@ -116,39 +125,111 @@ class RoutingNodes(ClaudeNodes):
     @property
     def user_prompt(self): return RequestPrompt()
 
+    @property
+    def router(self): return self.LLM.router.invoke
+
+    def clarify_request(self, state: RoutingState):
+        """Clarify the user's request"""
+        prev_input = state["input"]
+        response = input(
+            f"{self.PROMPT} '{state['input']}' is ambiguous.\n"
+            "Please clarify if you want a joke, story, or poem: \nUser>  ")
+        return {"input": response}
+
     # Nodes
-    def llm_call_1(state: RoutingState):
+    def create_story(self, state: RoutingState):
         """Write a story"""
 
-        result = llm.invoke(state["input"])
-        return {"output": result.content}
+        result = self.story_generator(state["input"])
+        return {"output": result.story}
 
 
-    def llm_call_2(state: RoutingState):
+    def create_joke(self, state: RoutingState):
         """Write a joke"""
 
-        result = llm.invoke(state["input"])
-        return {"output": result.content}
+        result = self.joke_generator(state["input"])
+        return {"output": result.joke}
 
 
-    def llm_call_3(state: RoutingState):
+    def create_poem(self, state: RoutingState):
         """Write a poem"""
 
-        result = llm.invoke(state["input"])
-        return {"output": result.content}
+        result = self.poem_generator(state["input"])
+        return {"output": result.poem}
 
 
-    def llm_call_router(state: RoutingState):
+    def call_router(self, state: RoutingState):
         """Route the input to the appropriate node"""
 
         # Run the augmented LLM with structured output to serve as routing logic
-        decision = router.invoke(
+        decision = self.router(
             [
                 SystemMessage(
-                    content="Route the input to story, joke, or poem based on the user's request."
+                    content="Route the input to story, joke, or poem based on the user's request.  If it is not clear, choose clarify."
                 ),
                 HumanMessage(content=state["input"]),
             ]
         )
+        
+        print(f"DEBUG -> DECISION = {decision}")
 
         return {"decision": decision.step}
+    
+class OrchestratorNodes(ClaudeNodes):
+    
+    @property
+    def user_prompt(self): return ReportPrompt()
+
+    
+    
+    def orchestrator(self, state: OrchestratorState):
+        """Orchestrator that generates a plan for the report"""
+
+        # Generate queries
+        report_sections = self.planner(
+            [
+                SystemMessage(content="Generate a plan for the report."),
+                HumanMessage(content=f"Here is the report topic: {state['topic']}"),
+            ]
+        )
+
+        return {"sections": report_sections.sections}
+
+
+    def llm_call(self, state: WorkerState):
+        """Worker writes a section of the report"""
+
+        # Generate section
+        section = self.LLM.sonnet.invoke(
+            [
+                SystemMessage(
+                    content="Write a report section following the provided name and description. Include no preamble for each section. Use markdown formatting."
+                ),
+                HumanMessage(
+                    content=f"Here is the section name: {state['section'].name} and description: {state['section'].description}"
+                ),
+            ]
+        )
+
+        # Write the updated section to completed sections
+        return {"completed_sections": [section.content]}
+
+
+    def synthesizer(self, state: OrchestratorState):
+        """Synthesize full report from sections"""
+
+        # List of completed sections
+        completed_sections = state["completed_sections"]
+
+        # Format completed section to str to use as context for final sections
+        completed_report_sections = "\n\n---\n\n".join(completed_sections)
+
+        return {"final_report": completed_report_sections}
+
+
+    # Conditional edge function to create llm_call workers that each write a section of the report
+    def assign_workers(state: OrchestratorState):
+        """Assign a worker to each section in the plan"""
+
+        # Kick off section writing in parallel via Send() API
+        return [Send("llm_call", {"section": s}) for s in state["sections"]]
