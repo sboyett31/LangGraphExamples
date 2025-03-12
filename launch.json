@@ -20,7 +20,7 @@
           "Orchestrator/worker.py",
           "ParallelChains/parallel_agents.py",
           "Routing/routing_agent.py",
-          "Utils/gates.py",
+          "Utils/edges.py",
           "Utils/nodes.py",
           "Utils/states.py",
           "Utils/structured_outputs.py",

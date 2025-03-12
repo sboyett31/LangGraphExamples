@@ -1,23 +1,26 @@
 import sys
-from typing import List, Dict, Any, Callable
+import os
+from typing import List, Dict, Any
+
+from Workflows.JokeGenerator.joke_gen import JokeGenerator
+# from Workflows.Orchestrator.orchestrator_agent import OrchestratorWorkflow
+# from Workflows.ParallelChains.parallel_agents import ParallelGenerator
+# from Workflows.Routing.routing_agent import RoutingWorkflow
+
+# Add current directory to sys.path to resolve local module imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
 import dotenv
 
 # Import agent implementations
-from JokeGenerator.joke_agent import JokeGenerator
-from Orchestrator.orchestrator_agent import OrchestratorWorkflow
-from ParallelChains.parallel_agents import ParallelGenerator
-from Routing.routing_agent import RoutingWorkflow
-from Utils.structured_outputs import SearchQuery
-from Utils.tools import multiply
-from config import MODELS
 
 
 def run_workflow(workflow):
     """Run the workflow agent."""
     print(f" running workflow: {workflow.__class__.__name__}")
     # Create and run the workflow
-    result = workflow.run()
+    end_state = workflow.run()
     
     # Display the workflow
     print("\nWorkflow:")
@@ -26,30 +29,29 @@ def run_workflow(workflow):
     # Check workflow type and display appropriate outputs
     if workflow.__class__.__name__ == "JokeGenerator":
         print("\nGenerated Joke:")
-        print(result.get('final_joke'))
+        print(end_state.get('final_joke'))
         print("\nJoke Generation Process:")
-        print(f"Initial Joke: {result.get('joke')}")
-        print(f"Improved Joke: {result.get('improved_joke')}")
-        print(f"Final Polished Joke: {result.get('final_joke')}")
-    elif workflow.__class__.__name__ == "ParallelGenerator":
-        print("\nGenerated Content:")
-        print(result.get('combined_output'))
-        print("\nIndividual Components:")
-        print(f"Joke: {result.get('joke')}")
-        print(f"Story: {result.get('story')}")
-        print(f"Poem: {result.get('poem')}")
-    elif workflow.__class__.__name__ == "RoutingWorkflow":
-        print("\nGenerated Content:")
-        print(result.get('output'))
-        print("\nRouting Information:")
-        print(f"User Input: {result.get('input')}")
-        print(f"Routing Decision: {result.get('decision')}")
-    elif workflow.__class__.__name__ == "OrchestratorWorkflow":
-        print("\nGenerated Content:")
-        print(result.get('output'))
-        print("\nRouting Information:")
-        print(f"User Input: {result.get('input')}")
-
+        print(f"Initial Joke: {end_state.get('joke')}")
+        print(f"Improved Joke: {end_state.get('improved_joke')}")
+        print(f"Final Polished Joke: {end_state.get('final_joke')}")
+    # elif workflow.__class__.__name__ == "ParallelGenerator":
+    #     print("\nGenerated Content:")
+    #     print(end_state.get('combined_output'))
+    #     print("\nIndividual Components:")
+    #     print(f"Joke: {end_state.get('joke')}")
+    #     print(f"Story: {end_state.get('story')}")
+    #     print(f"Poem: {end_state.get('poem')}")
+    # elif workflow.__class__.__name__ == "RoutingWorkflow":
+    #     print("\nGenerated Content:")
+    #     print(end_state.get('output'))
+    #     print("\nRouting Information:")
+    #     print(f"User Input: {end_state.get('input')}")
+    #     print(f"Routing Decision: {end_state.get('decision')}")
+    # elif workflow.__class__.__name__ == "OrchestratorWorkflow":
+    #     print("\nGenerated Content:")
+    #     print(end_state.get('final_report'))
+    #     print("\nRouting Information:")
+    #     print(f"Topic: {end_state.get('topic')}")
 
 
 def display_menu(options: List[Dict[str, Any]]):
@@ -86,21 +88,21 @@ def main():
             "description": "Generate jokes on a given topic using a graph-based workflow",
             "workflow": JokeGenerator()
         },
-        {
-            "name": "Parallel Generator",
-            "description": "Generate joke, story, and poem on a given topic using a graph-based workflow",
-            "workflow": ParallelGenerator() 
-        },
-        {
-            "name": "Content Router",
-            "description": "Intelligently route your request to generate a joke, story, or poem",
-            "workflow": RoutingWorkflow()
-        },
-        {
-            "name": "Report Generator",
-            "description": "Intelligently create a report about a topic of your choosing",
-            "workflow": OrchestratorWorkflow()
-        },
+        # {
+        #     "name": "Parallel Generator",
+        #     "description": "Generate joke, story, and poem on a given topic using a graph-based workflow",
+        #     "workflow": ParallelGenerator() 
+        # },
+        # {
+        #     "name": "Content Router",
+        #     "description": "Intelligently route your request to generate a joke, story, or poem",
+        #     "workflow": RoutingWorkflow()
+        # },
+        # {
+        #     "name": "Report Generator",
+        #     "description": "Intelligently create a report about a topic of your choosing",
+        #     "workflow": OrchestratorWorkflow()
+        # },
     ]
     
     while True:

@@ -1,7 +1,4 @@
-from Utils.structured_outputs import JokeResponse, PoemResponse, Route, Sections, StoryResponse
 import dotenv
-import os
-from langchain_anthropic import ChatAnthropic
 
 # Load environment variables immediately
 def init_env():
@@ -10,15 +7,10 @@ def init_env():
 # Call init_env at import time to ensure environment variables are loaded
 init_env()
 
-class MODELS:
-    class Anthropic:
-        class Claude_3_5:
-            sonnet = ChatAnthropic(
-                model="claude-3-5-sonnet-latest",
-                anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY")
-            )
-            joke_gen = sonnet.with_structured_output(JokeResponse)
-            story_gen = sonnet.with_structured_output(StoryResponse)
-            poem_gen = sonnet.with_structured_output(PoemResponse)
-            router = sonnet.with_structured_output(Route)
-            planner = sonnet.with_structured_output(Sections)
+            
+# Configuration for default debug values (only applied when debug decorators are used)
+class DEBUG:
+    class Node:
+        enter = True
+        exit = True
+        error = True
